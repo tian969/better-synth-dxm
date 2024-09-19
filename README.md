@@ -84,7 +84,7 @@ FAQ:
 
 但是, 我们仍认为它是一种有效的方案: 按照我们的理解, 相比于强模型提供的caption, 训练时使用自己产出的caption数据会更容易学习.
 
-2.3.2 Image-Textualization
+### 2.3.2 Image-Textualization
 论文链接: https://arxiv.org/html/2303.17207v1
 即上文介绍的it方案, 我们在初赛尝试使用它作为数据合成的步骤之一, 作者给出的卖点主要在于幻觉消除.
 原始数据本身就比较简短, 在合成之后使用效果会更好. 使用步骤详见: /solution/image_textualization/README.md
@@ -128,8 +128,9 @@ python solution/data_syn/batch_infer_intern_vl.py
 
 #### step4 数据筛选
 
-#### step5 进行训练
 
+#### step5 进行训练
+修改对应路径名,进行训练
 ```
 bash toolkit/train_mgm_2b_stage_1.sh
 ```
