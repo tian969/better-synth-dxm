@@ -57,10 +57,10 @@ FAQ:
 - 为什么要用简短的 caption 重写?
   实验中发现, 尽可能详细且带有逻辑关系的 caption 在实际训练中效果并不好, 甚至不如原始 caption. 我们推测:
 
-1) 模型本身参数量过小, 学习过多信息对它会有比较大的负担;
-2) 训练参数 epoch=1, 导致模型训练不充分.
-   基于以上考虑, 仅针对本次比赛而言, 通过 prompt 约束模型在合成 caption 时描述应尽量简洁, 突出主要内容,
-   只存在描述性话语且避免让模型推测.
+  1) 模型本身参数量过小, 学习过多信息对它会有比较大的负担;
+  2) 训练参数 epoch=1, 导致模型训练不充分.
+     基于以上考虑, 仅针对本次比赛而言, 通过 prompt 约束模型在合成 caption 时描述应尽量简洁, 突出主要内容,
+     只存在描述性话语且避免让模型推测.
 
 - 哪些图片最需要使用 Diffusion 进行重写?
   我们在观察中发现了一些 badcase, 如水印内容, 色情图片等, 这些图片有必要被过滤出来并重新根据 caption 进行重写,
@@ -68,7 +68,8 @@ FAQ:
 
 - data-juicer 数据筛选部分
   在初赛时, 我们直接使用了 data-juicer 给出的 llava recipe, 针对赛题数据进行分析后, 将关键指标: image-text similarity 和
-  image-text matching 的阈值设置为 25 分位点. 其他指标根据 3 sigma 原则过滤异常值即可.
+  image-text matching 的阈值设置为 25 分位点. 其他指标根据 3 sigma 原则过滤异常值; 也可以提高阈值, 对高质量数据合成后进行double
+  效果会更好.
 
 ### 2.3 其他方案
 
@@ -87,7 +88,11 @@ FAQ:
 ### 2.3.2 Image-Textualization
 论文链接: https://arxiv.org/html/2303.17207v1
 即上文介绍的it方案, 我们在初赛尝试使用它作为数据合成的步骤之一, 作者给出的卖点主要在于幻觉消除.
-原始数据本身就比较简短, 在合成之后使用效果会更好. 使用步骤详见: /solution/image_textualization/README.md
+原始数据本身就比较简短, 在合成之后使用效果会更好. 使用:
+按照: /solution/image_textualization/docs/install.md 安装依赖后
+```shell
+bash /solution/image_textualization/gen.sh
+```
 
 
 ## 3 运行
@@ -107,27 +112,41 @@ python tools/process_data.py --config ./configs/xx.yaml
 将脚本参数修改为自己的数据集路径
 
 ```shell
+python solution/data_process/preprocess_data.py # 修改输入文件以适配聚类输入
 bash solution/cluster/cluster.sh
 ```
 
 #### step3 数据合成
 
-经过step2后, 得到数据格式如下所示:
-
-```
-
-```
-
 由于复赛数据量较小, 我们进行了全量合成, 然后再筛选出2.5k数据double一下作为训练数据.
 可以根据实际需要 先进行step4, 然后把需要合成的数据筛选出来进行合成.
 注意修改里面的相关文件路径
-
 ```
 python solution/data_syn/batch_infer_intern_vl.py
 ```
 
 #### step4 数据筛选
+经过step2后, 得到数据格式如下所示:
 
+```
+{
+    "images/00012/000129775.jpg": {
+        "cluster": "46",
+        "distance_to_center": 122.87
+    },
+    "images/00092/000928445.jpg": {
+        "cluster": "46",
+        "distance_to_center": 149.7
+    },
+    ...
+}
+```
+之后按顺序执行脚本
+```shell
+python solution/data_process/trans_cluster_2dict.py  # 将聚类结果转化为key为簇名,value为具体数据的字典
+python solution/data_process/insert_cluster.py # 将聚类相关信息插入到原数据json中
+python solution/data_process/dynamic_increase.py  # 根据聚类信息, 动态进行挑选
+```
 
 #### step5 进行训练
 修改对应路径名,进行训练
